@@ -1,0 +1,9 @@
+JARFILE="$(dirname $0)/../@JARFILE_NAME@"
+OPTS="-DHOSTNAME1=$1 -DHOSTNAME2=$1"
+PROPS="@PROPERTIES_NAME@"
+ARGS="-f conf/$PROPS -o $2 -q $3"
+if [[ "" != "$4" ]]; then
+  ARGS="$ARGS -w $4"
+fi
+
+java $OPTS -jar $JARFILE $ARGS
