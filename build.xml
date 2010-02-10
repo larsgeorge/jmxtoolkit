@@ -1,15 +1,18 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project basedir="." default="jar" name="jmxtoolkit">
 
-  <property name="clover.enabled" value="false" />
-  <import file="../build-contrib.xml" />
+  <property name="version" value="0.20.4-dev"/>
+  <property name="name" value="${ant.project.name}"/>
 
+  <property name="src.dir" value="${basedir}/src"/>
+  <property name="lib.dir" value="${basedir}/lib"/>
+  <property name="build.dir" location="${basedir}/build"/>
   <property name="build.bin" location="${build.dir}/bin" />
   <property name="build.conf" location="${build.dir}/conf" />
+  <property name="build.classes" location="${build.dir}/classes"/>
   <property name="build.templates.cacti" location="${build.dir}/cacti-tpl" />
   <property name="main-class" value="org/apache/hadoop/hbase/jmxtoolkit/JMXToolkit" />
   <property name="class-name" value="org.apache.hadoop.hbase.jmxtoolkit.JMXToolkit" />
-  <property name="debuglevel" value="lines,vars,source" />
   <property name="properties.prefix" value="hbase-${version}" />
   <property name="properties.extension" value="properties" />
   <property name="properties.name" value="${properties.prefix}-jmx.${properties.extension}" />
@@ -21,7 +24,17 @@
   <property name="script.name.cacti" value="${build.bin}/jmxtkcacti-${properties.prefix}.sh" />
   <property name="script.template.nagios" value="${basedir}/bin/jmxtknagios.sh.template" />
   <property name="script.name.nagios" value="${build.bin}/jmxtknagios-${properties.prefix}.sh" />
-	
+  <property name="javac.debug" value="on"/>
+  <property name="javac.source" value="1.6"/>
+  <property name="javac.depecration" value="true"/>
+  <property name="javac.debuglevel" value="lines,vars,source" />
+
+  <fileset id="lib.jars" dir="${basedir}" includes="lib/*.jar"/>
+  <path id="classpath">
+      <fileset refid="lib.jars"/>
+      <pathelement location="${build.dir}"/>
+  </path>
+
   <target name="init">
     <echo message="Using prefix: ${properties.prefix}" />
     <mkdir dir="${build.dir}" />
@@ -71,12 +84,11 @@
   <target name="compile" depends="init">
     <echo message="contrib: ${name}"/>
     <javac 
-      encoding="${build.encoding}"
       srcdir="${src.dir}"
       includes="**/*.java"
       destdir="${build.classes}"
       debug="${javac.debug}"
-      debuglevel="${debuglevel}"
+      debuglevel="${javac.debuglevel}"
       deprecation="${javac.deprecation}">
       <classpath refid="classpath"/>
     </javac>
