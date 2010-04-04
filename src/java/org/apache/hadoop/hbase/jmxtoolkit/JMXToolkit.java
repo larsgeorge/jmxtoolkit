@@ -54,6 +54,7 @@ import javax.management.MBeanServerConnection;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
+import javax.management.openmbean.CompositeDataSupport;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
@@ -71,7 +72,7 @@ public class JMXToolkit {
   private static final Pattern vars = Pattern.compile("\\$\\{\\S+\\}"); 
   private static final DecimalFormat thresh = new DecimalFormat("#.##########");
   private static enum CompareResults { LOWER, LOWER_OR_EQUAL, EQUAL, 
-    GREATER_OR_EQUAL, GREATER, OK };
+    GREATER_OR_EQUAL, GREATER, OK }
   
   private JMXServiceURL jmxUrl = null;
   private JMXConnector connector = null;
@@ -517,34 +518,37 @@ public class JMXToolkit {
    * Constructs a new instance of this class and executes the action.
    * 
    * @param args  The command line arguments.
-   * @throws InstanceNotFoundException
-   * @throws IntrospectionException
-   * @throws ReflectionException
-   * @throws IOException
+   * @throws InstanceNotFoundException When instantiating the JMX bean fails.
+   * @throws IntrospectionException When instantiating the JMX bean fails.
+   * @throws ReflectionException When instantiating the JMX bean fails.
+   * @throws IOException When talking to the remote JMX server failed.
    */
   public JMXToolkit(String[] args) 
   throws InstanceNotFoundException, IntrospectionException, ReflectionException, 
   IOException {
     int exitCode = 0;
     parseArgs(args);
-    if (verbose) System.out.println("Reading properties...");
-    readProperties();
     String action = params.get("-a");
     if (action == null) action = params.get("-w") != null ? "check" : "query";
     if (verbose) System.out.println("Action -> " + action);
-    if (action.equals("create")) {
-      createConfig();
-      writeProperties();
-    } else if (action.equals("check")) {
-      exitCode = checkValue();
-    } else if (action.equals("query")) {
-      queryValues();
-      outputResults();
-    } else if (action.equals("encode")) {
-      System.out.println(URLEncoder.encode(params.get("-m"), "UTF8"));
-    } else {
-      System.err.println("Unknown action -> " + action);
-      exitCode = -99;
+    if (action.equals("walk")) walk();
+    else {
+      if (verbose) System.out.println("Reading properties...");
+      readProperties();
+      if (action.equals("create")) {
+        createConfig();
+        writeProperties();
+      } else if (action.equals("check")) {
+        exitCode = checkValue();
+      } else if (action.equals("query")) {
+        queryValues();
+        outputResults();
+      } else if (action.equals("encode")) {
+        System.out.println(URLEncoder.encode(params.get("-m"), "UTF8"));
+      } else {
+        System.err.println("Unknown action -> " + action);
+        exitCode = -99;
+      }
     }
     if (verbose) System.out.println("Exit code -> " + exitCode);
     if (verbose) System.out.println("Done.");
@@ -672,7 +676,7 @@ public class JMXToolkit {
    * using the classloader.
    * 
    * @return The reader instance or <code>null</code> if not found.
-   * @throws FileNotFoundException
+   * @throws FileNotFoundException When the properties file cannot be found.
    */
   private BufferedReader getPropertiesReader() throws FileNotFoundException {
     InputStream in = null;    
@@ -685,7 +689,7 @@ public class JMXToolkit {
         in = JMXToolkit.class.getClassLoader().getResourceAsStream(fn);
       }
       if (in == null) 
-        System.err.println("ERROR: Could not find configuration file -> " + fn);
+        System.err.println("WARNING: Could not find configuration file -> " + fn);
     }
     return in != null ? new BufferedReader(new InputStreamReader(in)) : null;
   }
@@ -701,13 +705,14 @@ public class JMXToolkit {
     String name = atp[0];
     // check if we have a special instruction line
     if (atp.length > 1 && name.startsWith("@")) {
-      String val = replaceVariables(atp[1], true);
-      if (name.equalsIgnoreCase("@object")) section.setObject(val);
-      if (name.equalsIgnoreCase("@regexp")) section.setRegexp(val);
-      if (name.equalsIgnoreCase("@url")) section.setURL(val);
-      if (name.equalsIgnoreCase("@extends")) section.setExtendsName(val);
-      if (name.equalsIgnoreCase("@user")) section.setUser(val);
-      if (name.equalsIgnoreCase("@password")) section.setPassword(val);
+      String val1 = replaceVariables(atp[1], true);
+      String val2 = replaceVariables(atp[1], false);
+      if (name.equalsIgnoreCase("@object")) section.setObject(val2);
+      if (name.equalsIgnoreCase("@regexp")) section.setRegexp(val2);
+      if (name.equalsIgnoreCase("@url")) section.setURL(val1);
+      if (name.equalsIgnoreCase("@extends")) section.setExtendsName(val1);
+      if (name.equalsIgnoreCase("@user")) section.setUser(val1);
+      if (name.equalsIgnoreCase("@password")) section.setPassword(val1);
       return;
     }
     // otherwise assume an attribute or an operation
@@ -796,7 +801,7 @@ public class JMXToolkit {
   /**
    * Writes the properties file out.
    * 
-   * @throws FileNotFoundException
+   * @throws FileNotFoundException When writing the properties fails.
    */
   private void writeProperties() throws FileNotFoundException {
     if (verbose) System.out.println("Writing configuration...");
@@ -810,7 +815,8 @@ public class JMXToolkit {
   }
 
   /**
-   * Queries the values for specific attributes and operations. 
+   * Queries the values for specific attributes and operations.
+   * 
    * @throws IOException When getting the values fails.
    */
   private void queryValues() throws IOException {
@@ -831,6 +837,7 @@ public class JMXToolkit {
       if (!section.isConnected()) openConnection(section);
       try {
         findObjectName(section);
+        if (verbose) System.out.println("Querying object -> " + section.getObject());
         if (attr != null) {
           MemberDetails details = section.getMember(attr);
           getMemberValue(section, details); 
@@ -877,9 +884,6 @@ public class JMXToolkit {
    * Finds the matching ObjectName when a section has a true pattern.
    * 
    * @param section  The section to find the object name for.
-   * @param regexp  The specific expression to use.
-   * @throws NullPointerException When the object name is null. 
-   * @throws MalformedObjectNameException When the object name is bad.
    * @throws IOException When querying the names fails.
    */
   private void findObjectName(Section section) 
@@ -933,8 +937,9 @@ public class JMXToolkit {
     String pass = params.get("-p");
     if (section != null && section.getPassword() != null)
       pass = section.getPassword();
-    m.put(JMXConnector.CREDENTIALS, new String[]{ replaceVariables(user, false),
-      replaceVariables(pass, false) });
+    if (user != null)
+      m.put(JMXConnector.CREDENTIALS, new String[]{ replaceVariables(user, false),
+        pass != null ? replaceVariables(pass, false) : null });
     // create JMX connection
     connector = JMXConnectorFactory.connect(jmxUrl, m);
     connection = connector.getMBeanServerConnection();
@@ -1013,6 +1018,50 @@ public class JMXToolkit {
   }
 
   /**
+   * Walks the remote JMX objects.
+   *
+   * @throws IOException When opening the JMX connection fails.
+   * @throws javax.management.InstanceNotFoundException When querying the JMX MBeans fails.
+   * @throws javax.management.IntrospectionException When querying the JMX MBeans fails.
+   * @throws javax.management.ReflectionException When querying the JMX MBeans fails.
+   */
+  private void walk()
+  throws IOException, IntrospectionException, InstanceNotFoundException, ReflectionException {
+    openConnection(null);
+    Set<ObjectName> names = connection.queryNames(null, null);
+    for (ObjectName on : names) {
+      System.out.println("object -> " + on.getCanonicalName());
+      MBeanInfo info = connection.getMBeanInfo(on);
+      for (MBeanAttributeInfo mbi : info.getAttributes()) {
+        System.out.println("  attribute name -> " + mbi.getName() + ", type -> " + mbi.getClass());
+        try {
+          Object attr = connection.getAttribute(on, mbi.getName());
+          if (attr instanceof CompositeDataSupport) {
+            CompositeDataSupport cds2 = (CompositeDataSupport) attr;
+            Set<String> keys = cds2.getCompositeType().keySet();
+            for (String key : keys) {
+              System.out.println("  attribute value -> " + key + " " + cds2.get(key));
+            }
+          } else {
+            if (attr.getClass().isArray()) {
+              Object[] a = (Object[]) attr;
+              for (int i = 0; i < a.length; i++) {
+                System.out.println("  attribute value[" + i + "] -> " + a[i]);
+              }
+            } else {
+              System.out.println("  attribute value -> " + attr.toString());
+            }
+          }
+        } catch (Exception e) {
+          System.err.println("Error reading attribute -> " + mbi.getName());
+          if (verbose) e.printStackTrace(System.err);
+        }
+      }
+    }
+    closeConnection(null);
+  }
+
+  /**
    * Prints the usage of the class. 
    */
   private void printUsage() {
@@ -1024,7 +1073,8 @@ public class JMXToolkit {
       "\t\t\tcreate\tScan a JMX object for available attributes\n" +
       "\t\t\tquery\tQuery a set of attributes from the given objects\n" +
       "\t\t\tcheck\tChecks a given value to be in a valid range (see -w below)\n" +
-      "\t\t\tencode\tHelps creating the encoded messages (see -m and -w below)\n\n" +
+      "\t\t\tencode\tHelps creating the encoded messages (see -m and -w below)\n" +
+      "\t\t\twalk\tWalk the entire remote object list\n\n" +
       "\t-c <user>\tThe user role to authenticate with (default: controlRole)\n" +
       "\t-p <password>\tThe password to authenticate with (default: password)\n" +
       "\t-u <url>\tThe JMX URL (default: service:jmx:rmi:///jndi/rmi://localhost:10001/jmxrmi)\n" +
@@ -1060,10 +1110,6 @@ public class JMXToolkit {
       printUsage();
       System.exit(0);
     }
-    // add defaults
-    params.put("-c", "controlRole");
-    params.put("-p", "password");
-    params.put("-u", "service:jmx:rmi:///jndi/rmi://localhost:10001/jmxrmi");
     // read command line arguments
     for (int n = 0; n < args.length; n++) {
       if (args[n].startsWith("-")) {
