@@ -2,12 +2,12 @@
 The JMXToolkit
 ==============
 
-The JMXToolkit is a combined class that can help you create a specific 
-configuration file to query many hosts subsequently to either gather the values 
-of the various JMX attributes and operations these servers expose or to run 
-Nagios type checks on them. 
+The JMXToolkit is a single, swiss-army-knife type class that can help you create
+specific configuration files to query many hosts subsequently and either gather
+the values of the various JMX attributes and operations these servers expose or
+to run Nagios type checks on them. 
 
-For the commandline parameters run the tool with -h as the sole option::
+For the command line parameters run the tool with -h as the sole option::
 
     $ java org.apache.hadoop.hbase.jmxtoolkit.JMXToolkit -h
 
