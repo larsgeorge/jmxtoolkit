@@ -83,7 +83,7 @@ Especially the installation instructions may be useful to set up JMX first:
 
 Please note that as of HBase 0.20.3 the hbase-env.sh already contains commented
 out JMX export statements so that setting up JMX for HBase is simply done by
-commenting out those few lines:
+commenting out those few lines::
 
     export HBASE_JMX_BASE="-Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false"
     export HBASE_MASTER_OPTS="$HBASE_MASTER_OPTS $HBASE_JMX_BASE -Dcom.sun.management.jmxremote.port=10101"
