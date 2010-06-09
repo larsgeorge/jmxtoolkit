@@ -245,7 +245,7 @@ public class JMXToolkit {
         return CompareResults.EQUAL; else return CompareResults.OK;
       if ("=".equals(comp)) if (c == 0)
         return CompareResults.EQUAL; else return CompareResults.OK;
-      if ("!=".equals(comp)) if (c == 0)
+      if ("!=".equals(comp)) if (c != 0)
         return CompareResults.NOT_EQUAL; else return CompareResults.OK;
       if (">=".equals(comp)) if (c >= 0)
         return CompareResults.GREATER_OR_EQUAL; else return CompareResults.OK;
