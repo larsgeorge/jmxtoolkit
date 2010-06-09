@@ -69,8 +69,8 @@ public class JMXToolkit {
 
   private static enum ReturnTypes { NONE, CHAR, STRING, BYTE, SHORT, INTEGER,
     LONG, DOUBLE, FLOAT, BOOLEAN, VOID }
-  private static final Pattern vars = Pattern.compile("\\$\\{\\S+\\}");
-  private static final DecimalFormat thresh = new DecimalFormat("#.##########");
+  private static final Pattern VARS = Pattern.compile("\\$\\{\\S+\\}");
+  private static final DecimalFormat THRESH = new DecimalFormat("#.##########");
   private static enum CompareResults { LOWER, LOWER_OR_EQUAL, EQUAL, NOT_EQUAL,
     GREATER_OR_EQUAL, GREATER, OK }
 
@@ -254,6 +254,14 @@ public class JMXToolkit {
       throw new IllegalArgumentException("Unknown comparator -> " + comp);
     }
 
+    private String format(String value) {
+      try {
+        return THRESH.format(value);
+      } catch (Exception e) {
+        return value;
+      }
+    }
+
     @Override
     public String toString() {
       String res = "";
@@ -263,11 +271,11 @@ public class JMXToolkit {
           (okMessage != null ? ":" + okMessage : "") +
           "|" + (warnCode != null ? warnCode : "") + ":" +
           (warnMessage != null ? warnMessage : "") + ":" +
-          (warnThreshold != null ? thresh.format(warnThreshold) : "") + ":" +
+          (warnThreshold != null ? format(warnThreshold) : "") + ":" +
           (warnComparator != null ? warnComparator : "") +
           "|" + (errorCode != null ? errorCode : "") + ":" +
           (errorMessage != null ? errorMessage : "") + ":" +
-          (errorThreshold != null ? thresh.format(errorThreshold) : "") + ":" +
+          (errorThreshold != null ? format(errorThreshold) : "") + ":" +
           (errorComparator != null ? errorComparator : "");
       return res;
     }
@@ -741,7 +749,7 @@ public class JMXToolkit {
    * @return The value with the replaced variables.
    */
   private String replaceVariables(String value, boolean keepVars) {
-    Matcher m = vars.matcher(value);
+    Matcher m = VARS.matcher(value);
     StringBuilder res = new StringBuilder();
     int start = 0;
     while (m.find()) {
