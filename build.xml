@@ -16,8 +16,9 @@
   <property name="properties.prefix" value="hbase-${version}" />
   <property name="properties.extension" value="properties" />
   <property name="properties.name" value="${properties.prefix}-jmx.${properties.extension}" />
-  <property name="properties.template" value="${basedir}/conf/current-jmx.properties.template" />
   <property name="properties.name.full" value="${build.conf}/${properties.name}" />
+  <property name="properties.template" value="${basedir}/conf/current-jmx.properties.template" />
+  <property name="properties.empty" value="${basedir}/conf/hadoop-hbase.properties" />
   <property name="jarfile.name" value="${properties.prefix}-${name}.jar" />
   <property name="jarfile.full" value="${build.dir}/${jarfile.name}" />
   <property name="script.template.cacti" value="${basedir}/bin/jmxtkcacti.sh.template" />
@@ -42,7 +43,7 @@
     <mkdir dir="${build.conf}" />
     <mkdir dir="${build.classes}" />
     <mkdir dir="${build.templates.cacti}" />
-  	
+
     <!-- copy all static configuration files -->
     <copy todir="${build.conf}">
       <fileset dir="${basedir}/conf" excludes="**/*.template" />
@@ -52,7 +53,7 @@
     <copy todir="${build.templates.cacti}">
       <fileset dir="${basedir}/cacti-tpl" />
     </copy>
-  	<!-- copy all static scripts -->
+    <!-- copy all static scripts -->
     <copy todir="${build.bin}">
       <fileset dir="${basedir}/bin" excludes="**/*.template" />
     </copy>
@@ -72,7 +73,7 @@
       <arg value="${script.name.nagios}" />
     </exec>
     <!-- make all scripts executable -->
-  	<chmod perm="ugo+x" type="file">
+    <chmod perm="ugo+x" type="file">
       <fileset dir="${build.bin}" />
     </chmod>
   </target>
@@ -83,7 +84,7 @@
 
   <target name="compile" depends="init">
     <echo message="contrib: ${name}"/>
-    <javac 
+    <javac
       srcdir="${src.dir}"
       includes="**/*.java"
       destdir="${build.classes}"
@@ -94,27 +95,27 @@
     </javac>
   </target>
 
-  <target name="jar" depends="compile" 
-  	description="Compile and jar the project">
+  <target name="jar" depends="compile"
+    description="Compile and jar the project">
     <jar jarfile="${jarfile.full}" basedir="${build.classes}">
       <zipfileset dir="${build.bin}" prefix="bin" />
       <zipfileset dir="${build.conf}" prefix="conf" />
       <zipfileset dir="${build.templates.cacti}" prefix="cacti-tpl" />
       <manifest>
-        <attribute name="Main-Class" 
+        <attribute name="Main-Class"
           value="${main-class}" />
       </manifest>
     </jar>
   </target>
 
-  <target name="create-properties" depends="compile" 
+  <target name="create-properties" depends="compile"
     description="Allows to create a specifc properties file">
     <java classname="${class-name}" failonerror="true"
       output="${build.conf}/${properties.name}">
       <syspropertyset id="systemprops">
         <propertyref builtin="commandline" />
-      </syspropertyset>      
-      <arg line="-f conf/hadoop-hbase.properties -x -a create" />
+      </syspropertyset>
+      <arg line="-f ${properties.empty} -x -a create" />
       <classpath>
         <pathelement path="${build.classes}" />
       </classpath>
