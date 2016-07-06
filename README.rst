@@ -5,11 +5,11 @@ The JMXToolkit
 The JMXToolkit is a single, swiss-army-knife type class that can help you create
 specific configuration files to query many hosts subsequently and either gather
 the values of the various JMX attributes and operations these servers expose or
-to run Nagios type checks on them. 
+to run Nagios type checks on them.
 
 For the command line parameters run the tool with -h as the sole option::
 
-    $ java org.apache.hadoop.hbase.jmxtoolkit.JMXToolkit -h
+    $ java com.larsgeorge.jmxtoolkit.JMXToolkit -h
 
     Usage: JMXToolkit [-a <action>] [-c <user>] [-p <password>] [-u url] [-f <config>] [-o <object>]
      [-e regexp] [-i <extends>] [-q <attr-oper>] [-w <check>] [-m <message>] [-x] [-l] [-v] [-h]
@@ -49,14 +49,14 @@ For the command line parameters run the tool with -h as the sole option::
         -v		Verbose output
         -h		Prints this help
 
-You can run ad-hoc queries specifying the required parameters on the command 
-line or make use of a specific properties file that let's you predefine all 
+You can run ad-hoc queries specifying the required parameters on the command
+line or make use of a specific properties file that let's you predefine all
 hosts, objects, attributes, checks and so on.
 
 Command Line
 ============
 
-There are five types of actions: "create", "query", "check", "encode, "and "walk". 
+There are five types of actions: "create", "query", "check", "encode, "and "walk".
 The "create" and "walk" actions are used to create properties files and are
 explained in the next section. The other three are explained here but can be used
 in combination with a properties file and examples of such use are also shown in the
@@ -65,12 +65,12 @@ next section.
 Query
 -----
 
-This action allows to simply query a specific or all attributes of a JMX enabled 
+This action allows to simply query a specific or all attributes of a JMX enabled
 host. Examples:
 
 - Retrieve all values for a specific object::
 
-    $ java org.apache.hadoop.hbase.jmxtoolkit.JMXToolkit \
+    $ java com.larsgeorge.jmxtoolkit.JMXToolkit \
       -u "service:jmx:rmi:///jndi/rmi://master.foobar.com:10001/jmxrmi" \
       -o "hadoop:name=FSNamesystemState,service=NameNode"
 
@@ -81,7 +81,7 @@ Note: "-a query" is the default and therefore was omitted from the commands abov
 
 - Retrieve one specific value only::
 
-    $ java org.apache.hadoop.hbase.jmxtoolkit.JMXToolkit \
+    $ java com.larsgeorge.jmxtoolkit.JMXToolkit \
       -u "service:jmx:rmi:///jndi/rmi://master.foobar.com:10001/jmxrmi" \
       -o "hadoop:name=FSNamesystemState,service=NameNode" -q CapacityRemaining
 
@@ -90,7 +90,7 @@ Note: "-a query" is the default and therefore was omitted from the commands abov
 An operation is distinguished from an attribute by a leading star symbol. This
 is also how they are distinguished in the properties files (see below)::
 
-    $ java org.apache.hadoop.hbase.jmxtoolkit.JMXToolkit \
+    $ java com.larsgeorge.jmxtoolkit.JMXToolkit \
       -u "service:jmx:rmi:///jndi/rmi://master.foobar.com:10001/jmxrmi" \
       -o "hadoop:name=FSNamesystemState,service=NameNode" -q *numLiveDataNodes
 
@@ -99,13 +99,13 @@ is also how they are distinguished in the properties files (see below)::
 Check
 -----
 
-A check is a Nagios type check where usually a single value of a JMX attribute 
-or operation is compared to a threshold value. If the value is higher than the 
-threshold a specific exit code is used to indicate a warning or even an error 
+A check is a Nagios type check where usually a single value of a JMX attribute
+or operation is compared to a threshold value. If the value is higher than the
+threshold a specific exit code is used to indicate a warning or even an error
 state. These exit codes are used by tools like Nagios to check if a value is OK
 or not. Examples::
 
-    $ java org.apache.hadoop.hbase.jmxtoolkit.JMXToolkit \
+    $ java com.larsgeorge.jmxtoolkit.JMXToolkit \
       -u "service:jmx:rmi:///jndi/rmi://master.foobar.com:10001/jmxrmi" \
       -o "hadoop:name=FSNamesystemState,service=NameNode" -q CapacityRemaining \
       -w "0|2::16583540879360:<|1::8291770439680:<" -v
@@ -119,14 +119,14 @@ or not. Examples::
     Exit code -> 2
     Done.
 
-Note: The use of the -v verbose option defies the intended use of a check as it 
-outputs more than just the exit codes, but it is useful to test the command and 
+Note: The use of the -v verbose option defies the intended use of a check as it
+outputs more than just the exit codes, but it is useful to test the command and
 hence its use in this example.
 
-Optionally a message can be specified that is output on the console, and which 
+Optionally a message can be specified that is output on the console, and which
 is typically used and displayed by tools like Nagios::
 
-    $ java org.apache.hadoop.hbase.jmxtoolkit.JMXToolkit \
+    $ java com.larsgeorge.jmxtoolkit.JMXToolkit \
       -u "service:jmx:rmi:///jndi/rmi://master.foobar.com:10001/jmxrmi" \
       -o "hadoop:name=FSNamesystemState,service=NameNode" -q CapacityRemaining \
       -w "0:OK%3A%20%7B0%7D|2:WARN%3A%20%7B0%7D:16583540879360:<|1:FAILED%3A%20%7B0%7D:8291770439680:<"
@@ -134,12 +134,12 @@ is typically used and displayed by tools like Nagios::
     WARN: 16,583,539,212,288
 
 The message is URL-encoded (see "Encode" action described below) and uses Java's
-MessageFormat class to format the message. A place-holder can be used to put the 
+MessageFormat class to format the message. A place-holder can be used to put the
 current value into the message, for example "CapacityRemaining OK: Remaining:{0}".
-This also allows to specify different number format patterns, for example 
+This also allows to specify different number format patterns, for example
 "{0,number,#}" resulting in::
- 
-    $ java org.apache.hadoop.hbase.jmxtoolkit.JMXToolkit \
+
+    $ java com.larsgeorge.jmxtoolkit.JMXToolkit \
       -u "service:jmx:rmi:///jndi/rmi://master.foobar.com:10001/jmxrmi" \
       -o "hadoop:name=FSNamesystemState,service=NameNode" -q CapacityRemaining \
       -w "0|2:WARN%3A+%7B0%2Cnumber%2C%23%7D:16583540879360:<|1:FAILED%3A+%7B0%2Cnumber%2C%23%7D:8291770439680:<"
@@ -149,18 +149,18 @@ This also allows to specify different number format patterns, for example
 Encode
 ------
 
-This action is to help create the appropriate messages for the checks explained 
+This action is to help create the appropriate messages for the checks explained
 above. Example::
 
-    $ java org.apache.hadoop.hbase.jmxtoolkit.JMXToolkit -a encode -m "OK: Current {0}"
+    $ java com.larsgeorge.jmxtoolkit.JMXToolkit -a encode -m "OK: Current {0}"
     OK%3A+Current+%7B0%7D
 
 Properties File
 ===============
 
-The use of properties files is twofold, first it allows to specify many nodes 
-and their values in one place. Secondly it saves a retrieval step which is 
-needed for ad-hoc queries without the "-q" option as shown above. 
+The use of properties files is twofold, first it allows to specify many nodes
+and their values in one place. Secondly it saves a retrieval step which is
+needed for ad-hoc queries without the "-q" option as shown above.
 
 Walk
 ----
@@ -171,7 +171,7 @@ discussed next.
 
 Example::
 
-    $ java org.apache.hadoop.hbase.jmxtoolkit.JMXToolkit -a walk
+    $ java com.larsgeorge.jmxtoolkit.JMXToolkit -a walk
     -u "service:jmx:rmi:///jndi/rmi://master.foobar.com:10001/jmxrmi" | grep object
 
     object -> java.lang:name=CMS Old Gen,type=MemoryPool
@@ -201,13 +201,13 @@ names explained next (see @object keys below).
 Create
 ------
 
-It does make sense to create the properties file in two steps. First is to 
+It does make sense to create the properties file in two steps. First is to
 create a template that defines the various values for each host and JMX object.
 
 One way is to use the "walk" action explained above and then feed a section name into
 the "create" action like so::
 
-    $ java org.apache.hadoop.hbase.jmxtoolkit.JMXToolkit -a create
+    $ java com.larsgeorge.jmxtoolkit.JMXToolkit -a create
     -u "service:jmx:rmi:///jndi/rmi://master.foobar.com:10001/jmxrmi"
     -o hadoop:name=RpcActivityForPort9000,service=NameNode
 
@@ -292,13 +292,13 @@ subsquently "hadoop-hbase.properties"::
 
     ; EOF
 
-The above template can be used to query a master and slave node to retrieve all 
+The above template can be used to query a master and slave node to retrieve all
 current known JMX attributes and operations. This is done like so::
 
     $ java -DHOSTNAME1=master.foobar.com -DHOSTNAME2=slave.foobar.com -DPASSWORD=mypass \
-      org.apache.hadoop.hbase.jmxtoolkit.JMXToolkit -f hadoop-hbase.properties -a create -x > myjmx.properties
+      com.larsgeorge.jmxtoolkit.JMXToolkit -f hadoop-hbase.properties -a create -x > myjmx.properties
 
-The ouput is saved in a new myjmx.properties file which looks like this 
+The ouput is saved in a new myjmx.properties file which looks like this
 (shortened)::
 
     hadoopFSNamesystemState]
@@ -360,44 +360,44 @@ The ouput is saved in a new myjmx.properties file which looks like this
     atomicIncrementTimeMinTime=LONG
     ...
 
-Notes: JMX operations are prefixed with a "*", specific node options are 
-prefixed with a "@". Each section has either an @object or @regexp option to 
-allow for exact or matches using a regular expression. The latter is useful 
-when the object name changes between server restarts, which is the case for 
-Hadoop's DataNode for example. In such a case the JMXToolkit does scan all 
-object names of a host to find a matching object. The regular expression should 
-*not* be too broad and cover more than one object. Rather use two sections with 
+Notes: JMX operations are prefixed with a "*", specific node options are
+prefixed with a "@". Each section has either an @object or @regexp option to
+allow for exact or matches using a regular expression. The latter is useful
+when the object name changes between server restarts, which is the case for
+Hadoop's DataNode for example. In such a case the JMXToolkit does scan all
+object names of a host to find a matching object. The regular expression should
+*not* be too broad and cover more than one object. Rather use two sections with
 more specific expressions to get the wanted object name match.
 
-With this newly created properties file the user can now query and check various 
-values. Once the properties file is created it can be edited to include all 
-required Nagios type checks. The file can also be updated exactly the same way 
-- the only current drawback is that comments are deleted. Checks however are 
-carried over, so no viable information is lost during an update. Simply run the 
-above create command again while specifying the existing properties file. 
+With this newly created properties file the user can now query and check various
+values. Once the properties file is created it can be edited to include all
+required Nagios type checks. The file can also be updated exactly the same way
+- the only current drawback is that comments are deleted. Checks however are
+carried over, so no viable information is lost during an update. Simply run the
+above create command again while specifying the existing properties file.
 Example::
 
     $ java -DHOSTNAME1=master.foobar.com -DHOSTNAME2=slave.foobar.com -DPASSWORD=mypass \
-      org.apache.hadoop.hbase.jmxtoolkit.JMXToolkit -f myjmx.properties -a create
+      com.larsgeorge.jmxtoolkit.JMXToolkit -f myjmx.properties -a create
 
 This updates the myjmx.properties in place.
 
-Query 
+Query
 -----
 
-As mentioned above, the same queries can be sent but with a lot less command 
+As mentioned above, the same queries can be sent but with a lot less command
 line parameters.
 
 Example::
 
-    $ java org.apache.hadoop.hbase.jmxtoolkit.JMXToolkit -f myjmx.properties \
+    $ java com.larsgeorge.jmxtoolkit.JMXToolkit -f myjmx.properties \
       -o hadoopFSNamesystemState -q CapacityRemaining
 
     CapacityRemaining:16583540396032
 
 Or with an operation::
 
-    $ java org.apache.hadoop.hbase.jmxtoolkit.JMXToolkit -f myjmx.properties \
+    $ java com.larsgeorge.jmxtoolkit.JMXToolkit -f myjmx.properties \
       -o hadoopFSNamesystemState -q *numLiveDataNodes
 
     numLiveDataNodes:20
@@ -406,8 +406,8 @@ Or with an operation::
 Check
 -----
 
-In addition to what was explained above, checks can be specified on the command 
-line or saved in the properties file for implicit use. Using the example above, 
+In addition to what was explained above, checks can be specified on the command
+line or saved in the properties file for implicit use. Using the example above,
 one could edit the myjmx.properties file to include the check::
 
     [hadoopFSNamesystemState]
@@ -417,7 +417,7 @@ one could edit the myjmx.properties file to include the check::
 
 This can then be used like this::
 
-    $ java org.apache.hadoop.hbase.jmxtoolkit.JMXToolkit -f myjmx.properties \
+    $ java com.larsgeorge.jmxtoolkit.JMXToolkit -f myjmx.properties \
       -o hadoopFSNamesystemState -q CapacityRemaining -a check -v
 
     Reading properties...
@@ -429,9 +429,9 @@ This can then be used like this::
     Exit code -> 2
     Done.
 
-With this option all required checks can be saved with the properties file and 
-executed whenever needed with just a few command line details. Of course, just 
-as explained above, the check can include specific messages that are printed on 
+With this option all required checks can be saved with the properties file and
+executed whenever needed with just a few command line details. Of course, just
+as explained above, the check can include specific messages that are printed on
 the console, in addition to the exit code::
 
     [hadoopFSNamesystemState]
@@ -441,6 +441,6 @@ the console, in addition to the exit code::
 
 And calling it returns (note the absence of the -v parameter)::
 
-    $ java org.apache.hadoop.hbase.jmxtoolkit.JMXToolkit -f myjmx.properties \
+    $ java com.larsgeorge.jmxtoolkit.JMXToolkit -f myjmx.properties \
       -o hadoopFSNamesystemState -q CapacityRemaining -a check
     WARN: 16583538905088
